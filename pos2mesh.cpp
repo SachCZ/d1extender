@@ -75,11 +75,11 @@ int main(int argc, char *argv[]) {
 
     cxxopts::Options options("pos2mesh", "Program to convert a list of positions to 2D mesh");
     options.add_options()
-            ("i,input", "Input file with positions list", cxxopts::value<std::string>())
+            ("i,input", "Input file with positions list (required)", cxxopts::value<std::string>())
             ("o,output", "File to write the output", cxxopts::value<std::string>()->default_value("mesh.mfem"))
-            ("c,count", "Cell count", cxxopts::value<int>())
-            ("f,from", "Y coordinate from", cxxopts::value<double>())
-            ("t,to", "Y coordinate to", cxxopts::value<double>())
+            ("c,count", "Cell count (required)", cxxopts::value<int>())
+            ("f,from", "Y coordinate from (required)", cxxopts::value<double>())
+            ("t,to", "Y coordinate to (required)", cxxopts::value<double>())
             ("h,help", "Print usage");
     auto parsedOptions = options.parse(argc, argv);
 
@@ -89,23 +89,33 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
 
-    std::string positionsCSVFilename = parsedOptions["input"].as<std::string>();
-    std::string meshFilename = parsedOptions["output"].as<std::string>();
-    int extendedCellCount = parsedOptions["count"].as<int>();
-    double from = parsedOptions["from"].as<double>();
-    double to = parsedOptions["to"].as<double>();
 
-    std::ifstream positionsCSVFile(positionsCSVFilename);
+    std::string input, output;
+    int cellCount;
+    double from, to;
+    try {
+        input = parsedOptions["input"].as<std::string>();
+        output = parsedOptions["output"].as<std::string>();
+        cellCount = parsedOptions["count"].as<int>();
+        from = parsedOptions["from"].as<double>();
+        to = parsedOptions["to"].as<double>();
+    } catch (const std::domain_error& error){
+        std::cout << "Invalid options, see help:" << std::endl;
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    std::ifstream positionsCSVFile(input);
     if (positionsCSVFile.fail()) {
-        std::cerr << "File " << positionsCSVFilename << " does not exist!" << std::endl;
+        std::cerr << "File " << input << " does not exist!" << std::endl;
         return 1;
     }
-    std::ofstream meshFile(meshFilename);
+    std::ofstream meshFile(output);
     meshFile << generateMesh(
             CSVReader<double>(positionsCSVFile, 1).getColumn(0),
-            linspace(from, to, extendedCellCount + 1)
+            linspace(from, to, cellCount + 1)
     );
 
-    std::cout << "Mesh was written to: " << meshFilename << std::endl;
+    std::cout << "Mesh was written to: " << output << std::endl;
     return 0;
 }

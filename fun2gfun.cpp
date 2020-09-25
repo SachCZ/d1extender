@@ -30,9 +30,9 @@ int main(int argc, char *argv[]) {
             "Program to covert 1D function to 2D grid function on a mesh obtained by pos2mesh"
     );
     options.add_options()
-            ("i,input", "Input file with positions list", cxxopts::value<std::string>())
-            ("o,output", "File to write the output", cxxopts::value<std::string>())
-            ("c,count", "Cell count", cxxopts::value<int>())
+            ("i,input", "Input file with positions list (required)", cxxopts::value<std::string>())
+            ("o,output", "File to write the output (required)", cxxopts::value<std::string>())
+            ("c,count", "Cell count (required)", cxxopts::value<int>())
             ("h,help", "Print usage");
     auto parsedOptions = options.parse(argc, argv);
 
@@ -41,9 +41,17 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
 
-    std::string input = parsedOptions["input"].as<std::string>();
-    std::string output = parsedOptions["output"].as<std::string>();
-    int cellCount = parsedOptions["count"].as<int>();
+    std::string input, output;
+    int cellCount;
+    try {
+        input = parsedOptions["input"].as<std::string>();
+        output = parsedOptions["output"].as<std::string>();
+        cellCount = parsedOptions["count"].as<int>();
+    } catch (const std::domain_error& error){
+        std::cout << "Invalid options, see help:" << std::endl;
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
 
     std::ifstream inputFile(input);
     std::ofstream outputFile(output);
